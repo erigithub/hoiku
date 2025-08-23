@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>保育施設検索・比較サービス</title>
+    <!-- favicon エラーを修正 -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏫</text></svg>">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css" />
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -653,8 +655,8 @@
         
         // サンプルデータ（フォールバック用）
         const sampleFacilityData = [
-            {"id": "ninka_001", "type": "ninka", "setup": "営利法人", "name": "ほっぺるランド外神田", "zipcode": "101-0021", "address": "千代田区外神田４－８－６", "longitude": 139.7726, "latitude": 35.70233, "phone": "03-3526-2065", "capacity": 87},
-            {"id": "ninka_002", "type": "ninka", "setup": "社福法人", "name": "外神田かなりや保育園", "zipcode": "101-0021", "address": "千代田区外神田３－６－１３", "longitude": 139.76976, "latitude": 35.70255, "phone": "03-3254-6500", "capacity": 50},
+            {"id": "ninka_001", "type": "ninka", "setup": "営利法人", "name": "ほっぺるランド外神田", "zipcode": "101-0021", "address": "千代田区外神田３−８−６", "longitude": 139.7726, "latitude": 35.70233, "phone": "03-3526-2065", "capacity": 87},
+            {"id": "ninka_002", "type": "ninka", "setup": "社福法人", "name": "外神田かなりや保育園", "zipcode": "101-0021", "address": "千代田区外神田３−６−１３", "longitude": 139.76976, "latitude": 35.70255, "phone": "03-3254-6500", "capacity": 50},
             {"id": "ninka_003", "type": "ninka", "setup": "区市町村", "name": "いずみこども園", "zipcode": "101-0024", "address": "千代田区神田和泉町１", "longitude": 139.77597, "latitude": 35.69919, "phone": "03-3866-9938", "capacity": 36}
         ];
         
@@ -760,7 +762,7 @@
                 // GitHub完全版データURL
                 const dataUrl = 'https://raw.githubusercontent.com/erigithub/hoiku/main/complete_facilities.json';
                 
-                document.getElementById('stats').innerHTML = '🔄 地図とデータを読み込み中...';
+                document.getElementById('stats').innerHTML = '📄 地図とデータを読み込み中...';
                 
                 let externalData = null;
                 try {
@@ -790,7 +792,7 @@
                         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
                     }
                 } catch (error) {
-                    console.error('🔄 データ取得失敗:', error.message);
+                    console.error('📄 データ取得失敗:', error.message);
                     console.log('サンプルデータで表示します');
                 }
                 
@@ -873,10 +875,10 @@
                     return false;
                 }
                 
-                // 運営主体フィルター（その他に含める項目を調整）
+                // 運営主体フィルター（その他に含まれる項目を調整）
                 if (setupFilter !== 'all') {
                     if (setupFilter === 'その他') {
-                        // その他に含める運営主体
+                        // その他に含まれる運営主体
                         if (!['他の法人', '公益法人', 'その他', '事務組合', '医療法人', '赤十字', '区市町村→社福法人'].includes(facility.setup)) {
                             return false;
                         }
@@ -919,7 +921,7 @@
                 
                 // 認証保育所の追加情報
                 const additionalInfo = facility.type === 'ninsho' ? `
-                    ${facility.railway ? `<div class="detail"><strong>最寄り路線:</strong> ${facility.railway} ${facility.station}</div>` : ''}
+                    ${facility.railway ? `<div class="detail"><strong>最寄路線:</strong> ${facility.railway} ${facility.station}</div>` : ''}
                     ${facility.access_method && facility.access_time ? `<div class="detail"><strong>アクセス:</strong> ${facility.access_method} ${facility.access_time}</div>` : ''}
                     ${facility.open_start && facility.open_end ? `<div class="detail"><strong>開所時間:</strong> ${facility.open_start}〜${facility.open_end}</div>` : ''}
                     ${facility.start_date ? `<div class="detail"><strong>開設日:</strong> ${facility.start_date}</div>` : ''}
@@ -1197,6 +1199,23 @@
                 window.open(lineShareUrl, '_blank', 'width=600,height=400');
             }
         }
+        
+        // メモ入力時の文字数カウント
+        document.addEventListener('DOMContentLoaded', function() {
+            const memoText = document.getElementById('memoText');
+            if (memoText) {
+                memoText.addEventListener('input', updateCharCount);
+            }
+        });
+        
+        // 初期化処理
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('📱 DOM読み込み完了');
+            initMap();
+            loadFacilityData();
+        });
+        
+        console.log('✅ スクリプト設定完了');
     </script>
 </body>
 </html>
