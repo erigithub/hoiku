@@ -5,7 +5,20 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>保育施設検索・比較サービス</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=BIZ+UDPGothic:wght@400;700&display=swap" rel="stylesheet">
     <style>
+        :root {
+            --text-color: #222222;
+            --bg-color: #FFFFF2;
+            --accent-1: #76B0CC;
+            --accent-2: #0D8854;
+            --accent-3: #FFD803;
+            --font-heading: 'Noto Sans JP', sans-serif;
+            --font-body: 'BIZ UDPGothic', sans-serif;
+        }
+        
         * {
             margin: 0;
             padding: 0;
@@ -13,28 +26,31 @@
         }
         
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f8fafc;
-            color: #333;
+            font-family: var(--font-body);
+            background-color: var(--bg-color);
+            color: var(--text-color);
         }
         
         .header {
-            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
-            color: white;
+            background: linear-gradient(135deg, var(--accent-1) 0%, var(--accent-2) 100%);
+            color: var(--bg-color);
             padding: 20px;
             text-align: center;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            box-shadow: 0 4px 20px rgba(118, 176, 204, 0.3);
         }
         
         .header h1 {
+            font-family: var(--font-heading);
             font-size: 2.2rem;
-            font-weight: 600;
+            font-weight: 700;
             margin-bottom: 8px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
         
         .header p {
+            font-family: var(--font-body);
             font-size: 1rem;
-            opacity: 0.9;
+            opacity: 0.95;
         }
         
         .main-container {
@@ -44,15 +60,16 @@
         
         .sidebar {
             width: 350px;
-            background: white;
-            box-shadow: 2px 0 10px rgba(0,0,0,0.05);
+            background: var(--bg-color);
+            box-shadow: 2px 0 15px rgba(118, 176, 204, 0.15);
             overflow-y: auto;
             z-index: 1000;
+            border-right: 3px solid var(--accent-3);
         }
         
         .controls {
             padding: 20px;
-            border-bottom: 1px solid #e5e7eb;
+            border-bottom: 2px solid rgba(118, 176, 204, 0.2);
         }
         
         .control-group {
@@ -61,33 +78,40 @@
         
         .control-group label {
             display: block;
-            font-weight: 600;
-            color: #374151;
+            font-family: var(--font-heading);
+            font-weight: 500;
+            color: var(--text-color);
             margin-bottom: 5px;
             font-size: 14px;
         }
         
         select, input {
             width: 100%;
-            padding: 10px 12px;
-            border: 2px solid #e5e7eb;
+            padding: 12px 15px;
+            border: 2px solid var(--accent-1);
             border-radius: 8px;
             font-size: 14px;
-            transition: border-color 0.2s;
+            font-family: var(--font-body);
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            transition: all 0.3s ease;
         }
         
         select:focus, input:focus {
             outline: none;
-            border-color: #4f46e5;
-            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+            border-color: var(--accent-2);
+            box-shadow: 0 0 0 3px rgba(13, 136, 84, 0.1);
+            transform: translateY(-1px);
         }
         
         .stats {
             padding: 15px 20px;
-            background: #f1f5f9;
-            border-bottom: 1px solid #e5e7eb;
+            background: linear-gradient(135deg, rgba(255, 216, 3, 0.1), rgba(118, 176, 204, 0.1));
+            border-bottom: 2px solid rgba(118, 176, 204, 0.2);
             font-size: 13px;
-            color: #64748b;
+            font-family: var(--font-body);
+            color: var(--text-color);
+            font-weight: 700;
         }
         
         .favorites-section {
@@ -95,9 +119,10 @@
         }
         
         .favorites-section h3 {
+            font-family: var(--font-heading);
             font-size: 16px;
-            font-weight: 600;
-            color: #1f2937;
+            font-weight: 700;
+            color: var(--text-color);
             margin-bottom: 15px;
             display: flex;
             align-items: center;
@@ -105,69 +130,79 @@
         }
         
         .favorite-item {
-            background: #f8fafc;
-            border: 1px solid #e5e7eb;
-            border-radius: 8px;
-            padding: 12px;
-            margin-bottom: 10px;
+            background: linear-gradient(135deg, rgba(255, 216, 3, 0.05), rgba(118, 176, 204, 0.05));
+            border: 2px solid var(--accent-1);
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 12px;
             cursor: pointer;
-            transition: all 0.2s;
+            transition: all 0.3s ease;
+            font-family: var(--font-body);
         }
         
         .favorite-item:hover {
-            background: #e2e8f0;
-            border-color: #4f46e5;
+            background: linear-gradient(135deg, rgba(255, 216, 3, 0.15), rgba(118, 176, 204, 0.15));
+            border-color: var(--accent-2);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(13, 136, 84, 0.2);
         }
         
         .favorite-item h4 {
+            font-family: var(--font-heading);
             font-size: 14px;
-            font-weight: 600;
-            color: #1f2937;
-            margin-bottom: 4px;
+            font-weight: 700;
+            color: var(--text-color);
+            margin-bottom: 6px;
         }
         
         .favorite-item .meta {
             font-size: 12px;
-            color: #64748b;
+            color: var(--text-color);
+            opacity: 0.8;
             display: flex;
             justify-content: space-between;
+            margin-bottom: 4px;
         }
         
         .favorite-item .memo {
             font-size: 12px;
-            color: #059669;
-            margin-top: 6px;
+            color: var(--accent-2);
+            margin-top: 8px;
             font-style: italic;
+            font-weight: 700;
         }
         
         #map {
             flex: 1;
             height: 100%;
+            border-left: 3px solid var(--accent-3);
         }
         
         .legend {
             position: absolute;
             bottom: 20px;
             right: 20px;
-            background: white;
-            padding: 16px;
-            border-radius: 12px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+            background: var(--bg-color);
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 6px 25px rgba(118, 176, 204, 0.3);
+            border: 3px solid var(--accent-3);
             z-index: 1000;
             font-size: 13px;
-            line-height: 1.4;
-            min-width: 180px;
+            line-height: 1.5;
+            min-width: 200px;
         }
         
         .legend h4 {
-            margin: 0 0 12px 0;
-            color: #1f2937;
-            font-size: 14px;
-            font-weight: 600;
+            margin: 0 0 15px 0;
+            color: var(--text-color);
+            font-family: var(--font-heading);
+            font-size: 16px;
+            font-weight: 700;
         }
         
         .legend-section {
-            margin-bottom: 12px;
+            margin-bottom: 15px;
         }
         
         .legend-section:last-child {
@@ -175,114 +210,126 @@
         }
         
         .legend-title {
-            font-size: 12px;
-            font-weight: 600;
-            color: #4b5563;
-            margin-bottom: 6px;
+            font-family: var(--font-heading);
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--text-color);
+            margin-bottom: 8px;
         }
         
         .legend-item {
             display: flex;
             align-items: center;
-            margin: 4px 0;
+            margin: 6px 0;
+            font-family: var(--font-body);
         }
         
         .legend-color {
-            width: 16px;
-            height: 16px;
+            width: 18px;
+            height: 18px;
             border-radius: 50%;
-            margin-right: 8px;
-            border: 2px solid white;
-            box-shadow: 0 0 4px rgba(0,0,0,0.2);
+            margin-right: 10px;
+            border: 3px solid var(--bg-color);
+            box-shadow: 0 0 5px rgba(34, 34, 34, 0.3);
         }
         
         .legend-square {
-            width: 16px;
-            height: 16px;
-            margin-right: 8px;
-            border: 2px solid white;
-            box-shadow: 0 0 4px rgba(0,0,0,0.2);
+            width: 18px;
+            height: 18px;
+            margin-right: 10px;
+            border: 3px solid var(--bg-color);
+            box-shadow: 0 0 5px rgba(34, 34, 34, 0.3);
         }
         
         .popup-content {
+            font-family: var(--font-body);
             font-size: 14px;
-            line-height: 1.5;
+            line-height: 1.6;
             max-width: 280px;
+            color: var(--text-color);
         }
         
         .popup-content h3 {
             margin: 0 0 10px 0;
-            color: #1f2937;
+            color: var(--text-color);
+            font-family: var(--font-heading);
             font-size: 16px;
-            font-weight: 600;
+            font-weight: 700;
         }
         
         .popup-content .facility-type {
             display: inline-block;
-            background: #4f46e5;
-            color: white;
-            padding: 3px 8px;
-            border-radius: 12px;
+            background: var(--accent-1);
+            color: var(--bg-color);
+            padding: 4px 10px;
+            border-radius: 15px;
+            font-family: var(--font-heading);
             font-size: 11px;
-            font-weight: 500;
-            margin-bottom: 8px;
+            font-weight: 700;
+            margin-bottom: 10px;
         }
         
         .popup-content .facility-type.ninsho {
-            background: #059669;
+            background: var(--accent-2);
         }
         
         .popup-content .detail {
             margin: 6px 0;
-            color: #4b5563;
+            color: var(--text-color);
             font-size: 13px;
         }
         
         .popup-content .detail strong {
-            color: #1f2937;
+            color: var(--text-color);
+            font-weight: 700;
         }
         
         .popup-actions {
-            margin-top: 12px;
+            margin-top: 15px;
             display: flex;
             gap: 8px;
+            flex-wrap: wrap;
         }
         
         .btn {
-            padding: 6px 12px;
+            padding: 8px 15px;
             border: none;
-            border-radius: 6px;
+            border-radius: 8px;
+            font-family: var(--font-heading);
             font-size: 12px;
-            font-weight: 500;
+            font-weight: 700;
             cursor: pointer;
-            transition: all 0.2s;
+            transition: all 0.3s ease;
         }
         
         .btn-primary {
-            background: #4f46e5;
-            color: white;
+            background: var(--accent-1);
+            color: var(--bg-color);
         }
         
         .btn-primary:hover {
-            background: #3730a3;
+            background: var(--accent-2);
+            transform: translateY(-1px);
         }
         
         .btn-secondary {
-            background: #e5e7eb;
-            color: #374151;
+            background: rgba(118, 176, 204, 0.2);
+            color: var(--text-color);
         }
         
         .btn-secondary:hover {
-            background: #d1d5db;
+            background: rgba(118, 176, 204, 0.3);
+            transform: translateY(-1px);
         }
         
         .btn-danger {
-            background: #ef4444;
-            color: white;
+            background: #E57373;
+            color: var(--bg-color);
         }
         
         .btn-danger:hover {
-            background: #dc2626;
+            background: #F44336;
+            transform: translateY(-1px);
         }
         
         /* モーダル */
@@ -294,54 +341,74 @@
             top: 0;
             width: 100%;
             height: 100%;
-            background-color: rgba(0,0,0,0.5);
+            background-color: rgba(34, 34, 34, 0.6);
         }
         
         .modal-content {
-            background-color: white;
+            background-color: var(--bg-color);
             margin: 10% auto;
-            padding: 24px;
-            border-radius: 12px;
+            padding: 30px;
+            border-radius: 15px;
             width: 90%;
-            max-width: 400px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+            max-width: 420px;
+            box-shadow: 0 20px 60px rgba(118, 176, 204, 0.4);
+            border: 3px solid var(--accent-3);
         }
         
         .modal-header {
-            margin-bottom: 16px;
+            margin-bottom: 20px;
         }
         
         .modal-header h3 {
+            font-family: var(--font-heading);
             font-size: 18px;
-            font-weight: 600;
-            color: #1f2937;
+            font-weight: 700;
+            color: var(--text-color);
         }
         
         .form-group {
-            margin-bottom: 16px;
+            margin-bottom: 20px;
         }
         
         .form-group label {
             display: block;
-            margin-bottom: 6px;
-            font-weight: 500;
-            color: #374151;
+            margin-bottom: 8px;
+            font-family: var(--font-heading);
+            font-weight: 700;
+            color: var(--text-color);
         }
         
         .form-group textarea {
             width: 100%;
-            padding: 10px 12px;
-            border: 2px solid #e5e7eb;
-            border-radius: 8px;
+            padding: 15px;
+            border: 2px solid var(--accent-1);
+            border-radius: 10px;
+            font-family: var(--font-body);
             font-size: 14px;
+            background-color: var(--bg-color);
+            color: var(--text-color);
             resize: vertical;
-            min-height: 80px;
+            min-height: 100px;
+            transition: border-color 0.3s ease;
+        }
+        
+        .form-group textarea:focus {
+            outline: none;
+            border-color: var(--accent-2);
         }
         
         .modal-actions {
             display: flex;
             justify-content: flex-end;
-            gap: 10px;
+            gap: 12px;
+        }
+        
+        .loading-message {
+            text-align: center;
+            padding: 20px;
+            color: var(--text-color);
+            font-family: var(--font-body);
+            font-style: italic;
         }
         
         @media (max-width: 768px) {
@@ -351,14 +418,25 @@
             
             .sidebar {
                 width: 100%;
-                height: 200px;
+                height: 250px;
+                border-right: none;
+                border-bottom: 3px solid var(--accent-3);
+            }
+            
+            #map {
+                border-left: none;
+                border-top: 3px solid var(--accent-3);
             }
             
             .legend {
                 position: relative;
                 bottom: auto;
                 right: auto;
-                margin: 10px;
+                margin: 15px;
+            }
+            
+            .header h1 {
+                font-size: 1.8rem;
             }
         }
     </style>
@@ -414,7 +492,7 @@
                     <span id="favoritesCount">(0)</span>
                 </h3>
                 <div id="favoritesList">
-                    <p style="color: #64748b; font-size: 13px; text-align: center; padding: 20px;">
+                    <p style="color: var(--text-color); opacity: 0.7; font-size: 13px; text-align: center; padding: 20px;">
                         お気に入りの施設がありません<br>
                         地図上の施設をクリックして追加してください
                     </p>
@@ -430,11 +508,11 @@
             <div class="legend-section">
                 <div class="legend-title">施設種別</div>
                 <div class="legend-item">
-                    <div class="legend-square" style="background-color: #4f46e5;"></div>
+                    <div class="legend-square" style="background-color: var(--accent-1);"></div>
                     <span>認可保育所</span>
                 </div>
                 <div class="legend-item">
-                    <div class="legend-square" style="background-color: #059669;"></div>
+                    <div class="legend-square" style="background-color: var(--accent-2);"></div>
                     <span>認証保育所</span>
                 </div>
             </div>
@@ -442,19 +520,19 @@
             <div class="legend-section">
                 <div class="legend-title">運営主体</div>
                 <div class="legend-item">
-                    <div class="legend-color" style="background-color: #e74c3c;"></div>
+                    <div class="legend-color" style="background-color: #E57373;"></div>
                     <span>営利法人</span>
                 </div>
                 <div class="legend-item">
-                    <div class="legend-color" style="background-color: #3498db;"></div>
+                    <div class="legend-color" style="background-color: var(--accent-1);"></div>
                     <span>社福法人</span>
                 </div>
                 <div class="legend-item">
-                    <div class="legend-color" style="background-color: #2ecc71;"></div>
+                    <div class="legend-color" style="background-color: var(--accent-2);"></div>
                     <span>区市町村</span>
                 </div>
                 <div class="legend-item">
-                    <div class="legend-color" style="background-color: #f39c12;"></div>
+                    <div class="legend-color" style="background-color: var(--accent-3);"></div>
                     <span>その他</span>
                 </div>
             </div>
@@ -521,31 +599,11 @@
             localStorage.setItem('nurseryMemos', JSON.stringify(memos));
         }
         
-        // サンプルデータ（認可保育所 + 認証保育所）
+        // サンプルデータ（フォールバック用）
         const sampleFacilityData = [
-            // 認可保育所
             {"id": "ninka_001", "type": "ninka", "setup": "営利法人", "name": "ほっぺるランド外神田", "zipcode": "101-0021", "address": "千代田区外神田４－８－６", "longitude": 139.7726, "latitude": 35.70233, "phone": "03-3526-2065", "capacity": 87},
             {"id": "ninka_002", "type": "ninka", "setup": "社福法人", "name": "外神田かなりや保育園", "zipcode": "101-0021", "address": "千代田区外神田３－６－１３", "longitude": 139.76976, "latitude": 35.70255, "phone": "03-3254-6500", "capacity": 50},
-            {"id": "ninka_003", "type": "ninka", "setup": "区市町村", "name": "いずみこども園", "zipcode": "101-0024", "address": "千代田区神田和泉町１", "longitude": 139.77597, "latitude": 35.69919, "phone": "03-3866-9938", "capacity": 36},
-            {"id": "ninka_004", "type": "ninka", "setup": "営利法人", "name": "アイグラン保育園東神田", "zipcode": "101-0031", "address": "千代田区東神田２－６－５　東神田ビル２・３階", "longitude": 139.78027, "latitude": 35.69564, "phone": "03-5809-2578", "capacity": 63},
-            {"id": "ninka_005", "type": "ninka", "setup": "社福法人", "name": "岩本町ちとせ保育園", "zipcode": "101-0032", "address": "千代田区岩本町２－１０－１２", "longitude": 139.77722, "latitude": 35.69344, "phone": "03-5820-2500", "capacity": 90},
-            {"id": "ninka_006", "type": "ninka", "setup": "営利法人", "name": "グローバルキッズ飯田橋園", "zipcode": "102-0071", "address": "千代田区富士見２－１４－３６　富士見ウエスト２・３階", "longitude": 139.74379, "latitude": 35.6969, "phone": "03-3239-8002", "capacity": 138},
-            {"id": "ninka_007", "type": "ninka", "setup": "区市町村", "name": "神田保育園", "zipcode": "101-0063", "address": "千代田区神田淡路町２－１０９", "longitude": 139.76709, "latitude": 35.69673, "phone": "03-3253-6258", "capacity": 120},
-            {"id": "ninka_008", "type": "ninka", "setup": "営利法人", "name": "さくらさくみらい人形町", "zipcode": "103-0006", "address": "中央区日本橋富沢町２－６", "longitude": 139.78362, "latitude": 35.68782, "phone": "03-6231-0597", "capacity": 74},
-            {"id": "ninka_009", "type": "ninka", "setup": "区市町村", "name": "月島保育園", "zipcode": "104-0052", "address": "中央区月島２－１０－３", "longitude": 139.78418, "latitude": 35.66351, "phone": "03-3531-6933", "capacity": 128},
-            {"id": "ninka_010", "type": "ninka", "setup": "営利法人", "name": "ほっぺるランド勝どき", "zipcode": "104-0054", "address": "中央区勝どき３－４－４", "longitude": 139.77534, "latitude": 35.65895, "phone": "03-5859-0450", "capacity": 130},
-            
-            // 認証保育所（サンプル）
-            {"id": "ninsho_001", "type": "ninsho", "setup": "営利法人", "name": "キッズガーデン神田", "zipcode": "101-0044", "address": "千代田区鍛冶町２－６－１", "longitude": 139.77121, "latitude": 35.69102, "phone": "03-3252-8181", "capacity": 40},
-            {"id": "ninsho_002", "type": "ninsho", "setup": "営利法人", "name": "ちゃいるどはうす大手町", "zipcode": "100-0004", "address": "千代田区大手町２－２－１", "longitude": 139.76331, "latitude": 35.68608, "phone": "03-3241-0808", "capacity": 30},
-            {"id": "ninsho_003", "type": "ninsho", "setup": "営利法人", "name": "ピノキオ幼児舎新橋園", "zipcode": "105-0004", "address": "港区新橋１－１８－６", "longitude": 139.75823, "latitude": 35.66715, "phone": "03-3591-5141", "capacity": 35},
-            {"id": "ninsho_004", "type": "ninsho", "setup": "営利法人", "name": "ハッピーマム銀座園", "zipcode": "104-0061", "address": "中央区銀座３－１２－１６", "longitude": 139.76441, "latitude": 35.67246, "phone": "03-3542-4488", "capacity": 25},
-            {"id": "ninsho_005", "type": "ninsho", "setup": "営利法人", "name": "キッズスクウェア丸の内東京", "zipcode": "100-0005", "address": "千代田区丸の内１－７－１２", "longitude": 139.76424, "latitude": 35.68149, "phone": "03-5220-3388", "capacity": 42},
-            {"id": "ninsho_006", "type": "ninsho", "setup": "営利法人", "name": "アスク人形町駅前保育園", "zipcode": "103-0013", "address": "中央区日本橋人形町１－１２－１１", "longitude": 139.78367, "latitude": 35.68654, "phone": "03-5695-3166", "capacity": 38},
-            {"id": "ninsho_007", "type": "ninsho", "setup": "営利法人", "name": "保育ルーム新宿", "zipcode": "160-0022", "address": "新宿区新宿３－２７－４", "longitude": 139.70285, "latitude": 35.69032, "phone": "03-3352-6611", "capacity": 28},
-            {"id": "ninsho_008", "type": "ninsho", "setup": "営利法人", "name": "チャイルドタイム恵比寿", "zipcode": "150-0013", "address": "渋谷区恵比寿１－１３－６", "longitude": 139.71012, "latitude": 35.64669, "phone": "03-3440-0808", "capacity": 32},
-            {"id": "ninsho_009", "type": "ninsho", "setup": "営利法人", "name": "ベビールーム品川", "zipcode": "140-0004", "address": "品川区南品川３－３－１０", "longitude": 139.74458, "latitude": 35.60798, "phone": "03-3474-5577", "capacity": 26},
-            {"id": "ninsho_010", "type": "ninsho", "setup": "営利法人", "name": "ちびっこランド上野", "zipcode": "110-0005", "address": "台東区上野２－１１－１６", "longitude": 139.77429, "latitude": 35.70792, "phone": "03-3832-2200", "capacity": 29}
+            {"id": "ninka_003", "type": "ninka", "setup": "区市町村", "name": "いずみこども園", "zipcode": "101-0024", "address": "千代田区神田和泉町１", "longitude": 139.77597, "latitude": 35.69919, "phone": "03-3866-9938", "capacity": 36}
         ];
         
         // 地図の初期化
@@ -563,14 +621,14 @@
         // 運営主体別の色分け
         function getMarkerColor(setup) {
             const colors = {
-                '営利法人': '#e74c3c',
-                '社福法人': '#3498db', 
-                '区市町村': '#2ecc71',
-                '他の法人': '#f39c12',
-                '公益法人': '#9b59b6',
-                'その他': '#95a5a6'
+                '営利法人': '#E57373',
+                '社福法人': '#76B0CC', 
+                '区市町村': '#0D8854',
+                '他の法人': '#FFD803',
+                '公益法人': '#9C27B0',
+                'その他': '#757575'
             };
-            return colors[setup] || '#95a5a6';
+            return colors[setup] || '#757575';
         }
         
         // 施設種別に基づくマーカー形状
@@ -583,7 +641,7 @@
                 return L.circleMarker([facility.latitude, facility.longitude], {
                     radius: size,
                     fillColor: color,
-                    color: '#4f46e5',
+                    color: '#76B0CC',
                     weight: 3,
                     opacity: 1,
                     fillOpacity: 0.8
@@ -593,7 +651,7 @@
                 return L.circleMarker([facility.latitude, facility.longitude], {
                     radius: size,
                     fillColor: color,
-                    color: '#059669',
+                    color: '#0D8854',
                     weight: 3,
                     opacity: 1,
                     fillOpacity: 0.8
@@ -729,8 +787,17 @@
                 const marker = createMarker(facility);
                 
                 const isFavorite = favorites.some(fav => fav.id === facility.id);
-                const facilityTypeLabel = facility.type === 'ninka' ? '認可保育所' : '認証保育所';
+                const facilityTypeLabel = facility.type === 'ninka' ? '認可保育所' : 
+                    `認証保育所${facility.subtype ? `(${facility.subtype}型)` : ''}`;
                 const facilityTypeClass = facility.type === 'ninka' ? '' : 'ninsho';
+                
+                // 認証保育所の追加情報
+                const additionalInfo = facility.type === 'ninsho' ? `
+                    ${facility.railway ? `<div class="detail"><strong>最寄り路線:</strong> ${facility.railway} ${facility.station}</div>` : ''}
+                    ${facility.access_method && facility.access_time ? `<div class="detail"><strong>アクセス:</strong> ${facility.access_method} ${facility.access_time}</div>` : ''}
+                    ${facility.open_start && facility.open_end ? `<div class="detail"><strong>開所時間:</strong> ${facility.open_start}〜${facility.open_end}</div>` : ''}
+                    ${facility.start_date ? `<div class="detail"><strong>開設日:</strong> ${facility.start_date}</div>` : ''}
+                ` : '';
                 
                 const popupContent = `
                     <div class="popup-content">
@@ -740,7 +807,9 @@
                         <div class="detail"><strong>所在地:</strong> ${facility.address}</div>
                         <div class="detail"><strong>定員:</strong> ${facility.capacity}名</div>
                         <div class="detail"><strong>電話:</strong> ${facility.phone}</div>
-                        ${facility.memo ? `<div class="detail" style="color: #059669; font-style: italic;"><strong>メモ:</strong> ${facility.memo}</div>` : ''}
+                        ${facility.zipcode ? `<div class="detail"><strong>郵便番号:</strong> ${facility.zipcode}</div>` : ''}
+                        ${additionalInfo}
+                        ${facility.memo ? `<div class="detail" style="color: var(--accent-2); font-style: italic;"><strong>メモ:</strong> ${facility.memo}</div>` : ''}
                         <div class="popup-actions">
                             ${isFavorite ? 
                                 `<button class="btn btn-danger" onclick="removeFromFavorites('${facility.id}')">お気に入り解除</button>` :
@@ -810,7 +879,7 @@
             
             if (favorites.length === 0) {
                 favoritesList.innerHTML = `
-                    <p style="color: #64748b; font-size: 13px; text-align: center; padding: 20px;">
+                    <p style="color: var(--text-color); opacity: 0.7; font-size: 13px; text-align: center; padding: 20px;">
                         お気に入りの施設がありません<br>
                         地図上の施設をクリックして追加してください
                     </p>
@@ -830,7 +899,7 @@
                             <span>${facilityTypeLabel} | ${facility.setup}</span>
                             <span>${facility.capacity}名</span>
                         </div>
-                        <div style="font-size: 11px; color: #64748b; margin-top: 2px;">
+                        <div style="font-size: 11px; opacity: 0.8; margin-top: 4px;">
                             ${facility.address}${additionalInfo}
                         </div>
                         ${facility.memo ? `<div class="memo">💭 ${facility.memo}</div>` : ''}
