@@ -606,6 +606,10 @@
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
     <script>
+        // 即座に実行してデバッグ
+        console.log('🚀 スクリプト開始');
+        console.log('Leaflet利用可能:', typeof L !== 'undefined');
+        
         let map;
         let markersLayer;
         let facilityData = [];
@@ -656,29 +660,56 @@
         
         // 地図の初期化
         function initMap() {
-            console.log('地図初期化開始');
+            console.log('🗺️ 地図初期化開始');
+            
             try {
+                const mapContainer = document.getElementById('map');
+                if (!mapContainer) {
+                    throw new Error('地図コンテナが見つかりません');
+                }
+                
+                console.log('地図コンテナサイズ:', mapContainer.offsetWidth, 'x', mapContainer.offsetHeight);
+                
+                // 既存の地図インスタンスがある場合は削除
+                if (map) {
+                    map.remove();
+                }
+                
                 map = L.map('map').setView([35.6762, 139.6503], 12);
-                console.log('地図オブジェクト作成成功');
+                console.log('✅ 地図オブジェクト作成成功');
                 
                 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                     attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
                     maxZoom: 18
                 }).addTo(map);
-                console.log('タイル追加成功');
+                console.log('✅ タイル追加成功');
                 
                 markersLayer = L.layerGroup().addTo(map);
-                console.log('マーカーレイヤー作成成功');
+                console.log('✅ マーカーレイヤー作成成功');
                 
                 // 地図読み込み完了イベント
                 map.whenReady(function() {
-                    console.log('✅ 地図の初期化完了');
-                    document.getElementById('stats').innerHTML = '🗺️ 地図読み込み完了、データを取得中...';
+                    console.log('🎉 地図の初期化完了');
+                    const statsElement = document.getElementById('stats');
+                    if (statsElement) {
+                        statsElement.innerHTML = '🗺️ 地図読み込み完了、データを取得中...';
+                    }
                 });
+                
+                // 地図のレンダリング強制
+                setTimeout(() => {
+                    if (map) {
+                        map.invalidateSize();
+                        console.log('地図サイズ再計算実行');
+                    }
+                }, 100);
                 
             } catch (error) {
                 console.error('❌ 地図初期化エラー:', error);
-                document.getElementById('stats').innerHTML = '❌ 地図の初期化に失敗しました';
+                const statsElement = document.getElementById('stats');
+                if (statsElement) {
+                    statsElement.innerHTML = '❌ 地図の初期化に失敗しました: ' + error.message;
+                }
             }
         }
         
