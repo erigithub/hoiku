@@ -656,14 +656,30 @@
         
         // 地図の初期化
         function initMap() {
-            map = L.map('map').setView([35.6762, 139.6503], 12);
-            
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-                maxZoom: 18
-            }).addTo(map);
-            
-            markersLayer = L.layerGroup().addTo(map);
+            console.log('地図初期化開始');
+            try {
+                map = L.map('map').setView([35.6762, 139.6503], 12);
+                console.log('地図オブジェクト作成成功');
+                
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+                    maxZoom: 18
+                }).addTo(map);
+                console.log('タイル追加成功');
+                
+                markersLayer = L.layerGroup().addTo(map);
+                console.log('マーカーレイヤー作成成功');
+                
+                // 地図読み込み完了イベント
+                map.whenReady(function() {
+                    console.log('✅ 地図の初期化完了');
+                    document.getElementById('stats').innerHTML = '🗺️ 地図読み込み完了、データを取得中...';
+                });
+                
+            } catch (error) {
+                console.error('❌ 地図初期化エラー:', error);
+                document.getElementById('stats').innerHTML = '❌ 地図の初期化に失敗しました';
+            }
         }
         
         // 運営主体別の色分け
@@ -713,14 +729,21 @@
                 // GitHub完全版データURL
                 const dataUrl = 'https://raw.githubusercontent.com/erigithub/hoiku/main/complete_facilities.json';
                 
-                document.getElementById('stats').innerHTML = '🔄 完全版データ読み込み中...';
+                document.getElementById('stats').innerHTML = '🔄 地図とデータを読み込み中...';
                 
                 let externalData = null;
                 try {
+                    console.log('データ読み込み開始:', dataUrl);
                     const response = await fetch(dataUrl);
+                    console.log('レスポンス状態:', response.status, response.statusText);
+                    
                     if (response.ok) {
                         externalData = await response.json();
                         console.log(`✅ 完全版データ読み込み成功: ${externalData.length}施設`);
+                        
+                        // データの有効性確認
+                        const validData = externalData.filter(f => f.latitude && f.longitude);
+                        console.log(`座標データありの施設: ${validData.length}件`);
                         
                         // 統計情報
                         const ninkaCount = externalData.filter(f => f.type === 'ninka').length;
@@ -731,13 +754,23 @@
                         console.log(`📊 認可保育所: ${ninkaCount}施設`);
                         console.log(`📊 認証保育所A型: ${ninshoACount}施設`);
                         console.log(`📊 認証保育所B型: ${ninshoBCount}施設`);
+                    } else {
+                        console.error('データ取得エラー:', response.status, response.statusText);
+                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
                     }
                 } catch (error) {
-                    console.log('🔄 完全版データ取得中、サンプルデータで表示:', error.message);
+                    console.error('🔄 データ取得失敗:', error.message);
+                    console.log('サンプルデータで表示します');
                 }
                 
                 // 完全版データが取得できた場合はそれを使用、失敗時はサンプルデータ
                 facilityData = externalData || sampleFacilityData;
+                
+                // データの最終確認
+                console.log('使用するデータ:', facilityData.length, '施設');
+                if (facilityData.length > 0) {
+                    console.log('サンプル施設:', facilityData[0]);
+                }
                 
                 loadStoredData();
                 setupFilters();
@@ -752,11 +785,11 @@
                     const ninshoCount = externalData.filter(f => f.type === 'ninsho').length;
                     document.getElementById('stats').innerHTML = `検索結果：認可保育所 ${ninkaCount.toLocaleString()}件　認証保育所 ${ninshoCount.toLocaleString()}件 | `;
                 } else {
-                    document.getElementById('stats').innerHTML = `⚠️ サンプルデータ表示中（完全版準備中）| `;
+                    document.getElementById('stats').innerHTML = `⚠️ サンプルデータ表示中（${facilityData.length}件）| `;
                 }
                 
             } catch (error) {
-                console.error('データ読み込みエラー:', error);
+                console.error('❌ データ読み込みエラー:', error);
                 document.getElementById('stats').innerHTML = '❌ データ読み込み失敗 | ';
                 
                 // エラー時はサンプルデータで続行
