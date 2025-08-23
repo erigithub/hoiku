@@ -546,8 +546,11 @@
                 <h3 id="memoModalTitle">メモを編集</h3>
             </div>
             <div class="form-group">
-                <label for="memoText">メモ内容</label>
-                <textarea id="memoText" placeholder="この施設についてのメモを入力してください..."></textarea>
+                <label for="memoText">メモ内容（140文字まで）</label>
+                <textarea id="memoText" placeholder="この施設についてのメモを入力してください..." maxlength="140"></textarea>
+                <div style="font-size: 12px; color: var(--text-color); opacity: 0.7; margin-top: 5px;">
+                    <span id="charCount">0</span>/140文字　※メモは20施設まで登録可能
+                </div>
             </div>
             <div class="modal-actions">
                 <button class="btn btn-secondary" onclick="closeMemoModal()">キャンセル</button>
@@ -702,7 +705,7 @@
                 if (externalData) {
                     const ninkaCount = externalData.filter(f => f.type === 'ninka').length;
                     const ninshoCount = externalData.filter(f => f.type === 'ninsho').length;
-                    document.getElementById('stats').innerHTML = `🎉 完全版読み込み完了！認可:${ninkaCount}, 認証:${ninshoCount} | `;
+                    document.getElementById('stats').innerHTML = `検索結果：認可保育所 ${ninkaCount.toLocaleString()}件　認証保育所 ${ninshoCount.toLocaleString()}件 | `;
                 } else {
                     document.getElementById('stats').innerHTML = `⚠️ サンプルデータ表示中（完全版準備中）| `;
                 }
@@ -725,15 +728,20 @@
         // フィルター設定
         function setupFilters() {
             const setupFilter = document.getElementById('setupFilter');
-            const uniqueSetups = [...new Set(facilityData.map(d => d.setup))];
             
-            uniqueSetups.forEach(setup => {
-                if (setup && setup.trim()) {
-                    const option = document.createElement('option');
-                    option.value = setup;
-                    option.textContent = setup;
-                    setupFilter.appendChild(option);
-                }
+            // 運営主体の選択肢を4種類に限定
+            const setupOptions = [
+                { value: '営利法人', label: '営利法人' },
+                { value: '社福法人', label: '社会福祉法人' },
+                { value: '区市町村', label: '市区町村' },
+                { value: 'その他', label: 'その他' }
+            ];
+            
+            setupOptions.forEach(option => {
+                const optionElement = document.createElement('option');
+                optionElement.value = option.value;
+                optionElement.textContent = option.label;
+                setupFilter.appendChild(optionElement);
             });
             
             // イベントリスナー追加
@@ -756,9 +764,18 @@
                     return false;
                 }
                 
-                // 運営主体フィルター
-                if (setupFilter !== 'all' && facility.setup !== setupFilter) {
-                    return false;
+                // 運営主体フィルター（その他に含める項目を調整）
+                if (setupFilter !== 'all') {
+                    if (setupFilter === 'その他') {
+                        // その他に含める運営主体
+                        if (!['他の法人', '公益法人', 'その他', '事務組合', '医療法人', '赤十字', '区市町村→社福法人'].includes(facility.setup)) {
+                            return false;
+                        }
+                    } else {
+                        if (facility.setup !== setupFilter) {
+                            return false;
+                        }
+                    }
                 }
                 
                 // 定員フィルター
@@ -825,10 +842,14 @@
             });
         }
         
-        // お気に入り機能
+        // お気に入り機能（12件制限）
         function addToFavorites(facilityId) {
             const facility = facilityData.find(f => f.id === facilityId);
             if (facility && !favorites.some(fav => fav.id === facilityId)) {
+                if (favorites.length >= 12) {
+                    alert('お気に入りは12件まで登録できます。他の施設を削除してから追加してください。');
+                    return;
+                }
                 favorites.push(facility);
                 saveFavorites();
                 updateFavoritesList();
@@ -843,14 +864,29 @@
             displayMarkers(); // マーカーを再描画
         }
         
-        // メモ機能
+        // メモ機能（140文字制限、20施設まで）
         function editMemo(facilityId) {
             const facility = facilityData.find(f => f.id === facilityId);
             if (facility) {
                 currentMemoFacility = facility;
                 document.getElementById('memoModalTitle').textContent = `${facility.name} - メモを編集`;
                 document.getElementById('memoText').value = facility.memo || '';
+                updateCharCount(); // 文字数カウント初期化
                 document.getElementById('memoModal').style.display = 'block';
+            }
+        }
+        
+        // 文字数カウント更新
+        function updateCharCount() {
+            const memoText = document.getElementById('memoText');
+            const charCount = document.getElementById('charCount');
+            if (memoText && charCount) {
+                charCount.textContent = memoText.value.length;
+                if (memoText.value.length > 140) {
+                    charCount.style.color = '#E57373';
+                } else {
+                    charCount.style.color = 'var(--text-color)';
+                }
             }
         }
         
@@ -862,6 +898,22 @@
         function saveMemo() {
             if (currentMemoFacility) {
                 const memoText = document.getElementById('memoText').value.trim();
+                
+                // 140文字制限をチェック
+                if (memoText.length > 140) {
+                    alert('メモは140文字以内で入力してください。');
+                    return;
+                }
+                
+                // メモが設定されている施設数をチェック（新規メモの場合のみ）
+                if (!currentMemoFacility.memo && memoText.length > 0) {
+                    const memoCount = facilityData.filter(f => f.memo && f.memo.trim()).length;
+                    if (memoCount >= 20) {
+                        alert('メモは20施設まで登録できます。他の施設のメモを削除してから追加してください。');
+                        return;
+                    }
+                }
+                
                 currentMemoFacility.memo = memoText;
                 saveMemos();
                 displayMarkers(); // マーカーを再描画
@@ -963,6 +1015,13 @@
         document.addEventListener('DOMContentLoaded', function() {
             initMap();
             loadFacilityData();
+            
+            // メモテキストエリアの文字数カウント
+            const memoTextArea = document.getElementById('memoText');
+            if (memoTextArea) {
+                memoTextArea.addEventListener('input', updateCharCount);
+                memoTextArea.addEventListener('keyup', updateCharCount);
+            }
         });
     </script>
 </body>
