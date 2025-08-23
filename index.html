@@ -1,0 +1,900 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>保育施設検索・比較サービス</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css" />
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f8fafc;
+            color: #333;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+            color: white;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+        
+        .header h1 {
+            font-size: 2.2rem;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+        
+        .header p {
+            font-size: 1rem;
+            opacity: 0.9;
+        }
+        
+        .main-container {
+            display: flex;
+            height: calc(100vh - 120px);
+        }
+        
+        .sidebar {
+            width: 350px;
+            background: white;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.05);
+            overflow-y: auto;
+            z-index: 1000;
+        }
+        
+        .controls {
+            padding: 20px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        
+        .control-group {
+            margin-bottom: 15px;
+        }
+        
+        .control-group label {
+            display: block;
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 5px;
+            font-size: 14px;
+        }
+        
+        select, input {
+            width: 100%;
+            padding: 10px 12px;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.2s;
+        }
+        
+        select:focus, input:focus {
+            outline: none;
+            border-color: #4f46e5;
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+        }
+        
+        .stats {
+            padding: 15px 20px;
+            background: #f1f5f9;
+            border-bottom: 1px solid #e5e7eb;
+            font-size: 13px;
+            color: #64748b;
+        }
+        
+        .favorites-section {
+            padding: 20px;
+        }
+        
+        .favorites-section h3 {
+            font-size: 16px;
+            font-weight: 600;
+            color: #1f2937;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .favorite-item {
+            background: #f8fafc;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .favorite-item:hover {
+            background: #e2e8f0;
+            border-color: #4f46e5;
+        }
+        
+        .favorite-item h4 {
+            font-size: 14px;
+            font-weight: 600;
+            color: #1f2937;
+            margin-bottom: 4px;
+        }
+        
+        .favorite-item .meta {
+            font-size: 12px;
+            color: #64748b;
+            display: flex;
+            justify-content: space-between;
+        }
+        
+        .favorite-item .memo {
+            font-size: 12px;
+            color: #059669;
+            margin-top: 6px;
+            font-style: italic;
+        }
+        
+        #map {
+            flex: 1;
+            height: 100%;
+        }
+        
+        .legend {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            background: white;
+            padding: 16px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+            z-index: 1000;
+            font-size: 13px;
+            line-height: 1.4;
+            min-width: 180px;
+        }
+        
+        .legend h4 {
+            margin: 0 0 12px 0;
+            color: #1f2937;
+            font-size: 14px;
+            font-weight: 600;
+        }
+        
+        .legend-section {
+            margin-bottom: 12px;
+        }
+        
+        .legend-section:last-child {
+            margin-bottom: 0;
+        }
+        
+        .legend-title {
+            font-size: 12px;
+            font-weight: 600;
+            color: #4b5563;
+            margin-bottom: 6px;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin: 4px 0;
+        }
+        
+        .legend-color {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            margin-right: 8px;
+            border: 2px solid white;
+            box-shadow: 0 0 4px rgba(0,0,0,0.2);
+        }
+        
+        .legend-square {
+            width: 16px;
+            height: 16px;
+            margin-right: 8px;
+            border: 2px solid white;
+            box-shadow: 0 0 4px rgba(0,0,0,0.2);
+        }
+        
+        .popup-content {
+            font-size: 14px;
+            line-height: 1.5;
+            max-width: 280px;
+        }
+        
+        .popup-content h3 {
+            margin: 0 0 10px 0;
+            color: #1f2937;
+            font-size: 16px;
+            font-weight: 600;
+        }
+        
+        .popup-content .facility-type {
+            display: inline-block;
+            background: #4f46e5;
+            color: white;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 500;
+            margin-bottom: 8px;
+        }
+        
+        .popup-content .facility-type.ninsho {
+            background: #059669;
+        }
+        
+        .popup-content .detail {
+            margin: 6px 0;
+            color: #4b5563;
+            font-size: 13px;
+        }
+        
+        .popup-content .detail strong {
+            color: #1f2937;
+        }
+        
+        .popup-actions {
+            margin-top: 12px;
+            display: flex;
+            gap: 8px;
+        }
+        
+        .btn {
+            padding: 6px 12px;
+            border: none;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .btn-primary {
+            background: #4f46e5;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #3730a3;
+        }
+        
+        .btn-secondary {
+            background: #e5e7eb;
+            color: #374151;
+        }
+        
+        .btn-secondary:hover {
+            background: #d1d5db;
+        }
+        
+        .btn-danger {
+            background: #ef4444;
+            color: white;
+        }
+        
+        .btn-danger:hover {
+            background: #dc2626;
+        }
+        
+        /* モーダル */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 10000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+        }
+        
+        .modal-content {
+            background-color: white;
+            margin: 10% auto;
+            padding: 24px;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 400px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+        }
+        
+        .modal-header {
+            margin-bottom: 16px;
+        }
+        
+        .modal-header h3 {
+            font-size: 18px;
+            font-weight: 600;
+            color: #1f2937;
+        }
+        
+        .form-group {
+            margin-bottom: 16px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: 500;
+            color: #374151;
+        }
+        
+        .form-group textarea {
+            width: 100%;
+            padding: 10px 12px;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 14px;
+            resize: vertical;
+            min-height: 80px;
+        }
+        
+        .modal-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+        
+        @media (max-width: 768px) {
+            .main-container {
+                flex-direction: column;
+            }
+            
+            .sidebar {
+                width: 100%;
+                height: 200px;
+            }
+            
+            .legend {
+                position: relative;
+                bottom: auto;
+                right: auto;
+                margin: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🏫 保育施設検索・比較サービス</h1>
+        <p>認可保育所・認証保育所を地図で検索してお気に入り管理</p>
+    </div>
+    
+    <div class="main-container">
+        <div class="sidebar">
+            <div class="controls">
+                <div class="control-group">
+                    <label for="facilityTypeFilter">施設種別</label>
+                    <select id="facilityTypeFilter">
+                        <option value="all">すべて</option>
+                        <option value="ninka">認可保育所</option>
+                        <option value="ninsho">認証保育所</option>
+                    </select>
+                </div>
+                
+                <div class="control-group">
+                    <label for="setupFilter">運営主体</label>
+                    <select id="setupFilter">
+                        <option value="all">すべて</option>
+                    </select>
+                </div>
+                
+                <div class="control-group">
+                    <label for="capacityFilter">定員規模</label>
+                    <select id="capacityFilter">
+                        <option value="all">すべて</option>
+                        <option value="small">小規模 (20-50名)</option>
+                        <option value="medium">中規模 (51-100名)</option>
+                        <option value="large">大規模 (101名以上)</option>
+                    </select>
+                </div>
+                
+                <div class="control-group">
+                    <label for="searchInput">施設名検索</label>
+                    <input type="text" id="searchInput" placeholder="施設名を入力して検索...">
+                </div>
+            </div>
+            
+            <div class="stats" id="stats">
+                地図を読み込み中...
+            </div>
+            
+            <div class="favorites-section">
+                <h3>
+                    ⭐ お気に入り施設 
+                    <span id="favoritesCount">(0)</span>
+                </h3>
+                <div id="favoritesList">
+                    <p style="color: #64748b; font-size: 13px; text-align: center; padding: 20px;">
+                        お気に入りの施設がありません<br>
+                        地図上の施設をクリックして追加してください
+                    </p>
+                </div>
+            </div>
+        </div>
+        
+        <div id="map"></div>
+        
+        <div class="legend">
+            <h4>凡例</h4>
+            
+            <div class="legend-section">
+                <div class="legend-title">施設種別</div>
+                <div class="legend-item">
+                    <div class="legend-square" style="background-color: #4f46e5;"></div>
+                    <span>認可保育所</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-square" style="background-color: #059669;"></div>
+                    <span>認証保育所</span>
+                </div>
+            </div>
+            
+            <div class="legend-section">
+                <div class="legend-title">運営主体</div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background-color: #e74c3c;"></div>
+                    <span>営利法人</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background-color: #3498db;"></div>
+                    <span>社福法人</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background-color: #2ecc71;"></div>
+                    <span>区市町村</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background-color: #f39c12;"></div>
+                    <span>その他</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- メモ編集モーダル -->
+    <div id="memoModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="memoModalTitle">メモを編集</h3>
+            </div>
+            <div class="form-group">
+                <label for="memoText">メモ内容</label>
+                <textarea id="memoText" placeholder="この施設についてのメモを入力してください..."></textarea>
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-secondary" onclick="closeMemoModal()">キャンセル</button>
+                <button class="btn btn-primary" onclick="saveMemo()">保存</button>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+    <script>
+        let map;
+        let markersLayer;
+        let facilityData = [];
+        let filteredData = [];
+        let favorites = [];
+        let currentMemoFacility = null;
+        
+        // ローカルストレージからお気に入りとメモを読み込み
+        function loadStoredData() {
+            const storedFavorites = localStorage.getItem('nurseryFavorites');
+            const storedMemos = localStorage.getItem('nurseryMemos');
+            
+            if (storedFavorites) {
+                favorites = JSON.parse(storedFavorites);
+            }
+            
+            if (storedMemos) {
+                const memos = JSON.parse(storedMemos);
+                facilityData.forEach(facility => {
+                    if (memos[facility.id]) {
+                        facility.memo = memos[facility.id];
+                    }
+                });
+            }
+        }
+        
+        // データの保存
+        function saveFavorites() {
+            localStorage.setItem('nurseryFavorites', JSON.stringify(favorites));
+        }
+        
+        function saveMemos() {
+            const memos = {};
+            facilityData.forEach(facility => {
+                if (facility.memo) {
+                    memos[facility.id] = facility.memo;
+                }
+            });
+            localStorage.setItem('nurseryMemos', JSON.stringify(memos));
+        }
+        
+        // サンプルデータ（認可保育所 + 認証保育所）
+        const sampleFacilityData = [
+            // 認可保育所
+            {"id": "ninka_001", "type": "ninka", "setup": "営利法人", "name": "ほっぺるランド外神田", "zipcode": "101-0021", "address": "千代田区外神田４－８－６", "longitude": 139.7726, "latitude": 35.70233, "phone": "03-3526-2065", "capacity": 87},
+            {"id": "ninka_002", "type": "ninka", "setup": "社福法人", "name": "外神田かなりや保育園", "zipcode": "101-0021", "address": "千代田区外神田３－６－１３", "longitude": 139.76976, "latitude": 35.70255, "phone": "03-3254-6500", "capacity": 50},
+            {"id": "ninka_003", "type": "ninka", "setup": "区市町村", "name": "いずみこども園", "zipcode": "101-0024", "address": "千代田区神田和泉町１", "longitude": 139.77597, "latitude": 35.69919, "phone": "03-3866-9938", "capacity": 36},
+            {"id": "ninka_004", "type": "ninka", "setup": "営利法人", "name": "アイグラン保育園東神田", "zipcode": "101-0031", "address": "千代田区東神田２－６－５　東神田ビル２・３階", "longitude": 139.78027, "latitude": 35.69564, "phone": "03-5809-2578", "capacity": 63},
+            {"id": "ninka_005", "type": "ninka", "setup": "社福法人", "name": "岩本町ちとせ保育園", "zipcode": "101-0032", "address": "千代田区岩本町２－１０－１２", "longitude": 139.77722, "latitude": 35.69344, "phone": "03-5820-2500", "capacity": 90},
+            {"id": "ninka_006", "type": "ninka", "setup": "営利法人", "name": "グローバルキッズ飯田橋園", "zipcode": "102-0071", "address": "千代田区富士見２－１４－３６　富士見ウエスト２・３階", "longitude": 139.74379, "latitude": 35.6969, "phone": "03-3239-8002", "capacity": 138},
+            {"id": "ninka_007", "type": "ninka", "setup": "区市町村", "name": "神田保育園", "zipcode": "101-0063", "address": "千代田区神田淡路町２－１０９", "longitude": 139.76709, "latitude": 35.69673, "phone": "03-3253-6258", "capacity": 120},
+            {"id": "ninka_008", "type": "ninka", "setup": "営利法人", "name": "さくらさくみらい人形町", "zipcode": "103-0006", "address": "中央区日本橋富沢町２－６", "longitude": 139.78362, "latitude": 35.68782, "phone": "03-6231-0597", "capacity": 74},
+            {"id": "ninka_009", "type": "ninka", "setup": "区市町村", "name": "月島保育園", "zipcode": "104-0052", "address": "中央区月島２－１０－３", "longitude": 139.78418, "latitude": 35.66351, "phone": "03-3531-6933", "capacity": 128},
+            {"id": "ninka_010", "type": "ninka", "setup": "営利法人", "name": "ほっぺるランド勝どき", "zipcode": "104-0054", "address": "中央区勝どき３－４－４", "longitude": 139.77534, "latitude": 35.65895, "phone": "03-5859-0450", "capacity": 130},
+            
+            // 認証保育所（サンプル）
+            {"id": "ninsho_001", "type": "ninsho", "setup": "営利法人", "name": "キッズガーデン神田", "zipcode": "101-0044", "address": "千代田区鍛冶町２－６－１", "longitude": 139.77121, "latitude": 35.69102, "phone": "03-3252-8181", "capacity": 40},
+            {"id": "ninsho_002", "type": "ninsho", "setup": "営利法人", "name": "ちゃいるどはうす大手町", "zipcode": "100-0004", "address": "千代田区大手町２－２－１", "longitude": 139.76331, "latitude": 35.68608, "phone": "03-3241-0808", "capacity": 30},
+            {"id": "ninsho_003", "type": "ninsho", "setup": "営利法人", "name": "ピノキオ幼児舎新橋園", "zipcode": "105-0004", "address": "港区新橋１－１８－６", "longitude": 139.75823, "latitude": 35.66715, "phone": "03-3591-5141", "capacity": 35},
+            {"id": "ninsho_004", "type": "ninsho", "setup": "営利法人", "name": "ハッピーマム銀座園", "zipcode": "104-0061", "address": "中央区銀座３－１２－１６", "longitude": 139.76441, "latitude": 35.67246, "phone": "03-3542-4488", "capacity": 25},
+            {"id": "ninsho_005", "type": "ninsho", "setup": "営利法人", "name": "キッズスクウェア丸の内東京", "zipcode": "100-0005", "address": "千代田区丸の内１－７－１２", "longitude": 139.76424, "latitude": 35.68149, "phone": "03-5220-3388", "capacity": 42},
+            {"id": "ninsho_006", "type": "ninsho", "setup": "営利法人", "name": "アスク人形町駅前保育園", "zipcode": "103-0013", "address": "中央区日本橋人形町１－１２－１１", "longitude": 139.78367, "latitude": 35.68654, "phone": "03-5695-3166", "capacity": 38},
+            {"id": "ninsho_007", "type": "ninsho", "setup": "営利法人", "name": "保育ルーム新宿", "zipcode": "160-0022", "address": "新宿区新宿３－２７－４", "longitude": 139.70285, "latitude": 35.69032, "phone": "03-3352-6611", "capacity": 28},
+            {"id": "ninsho_008", "type": "ninsho", "setup": "営利法人", "name": "チャイルドタイム恵比寿", "zipcode": "150-0013", "address": "渋谷区恵比寿１－１３－６", "longitude": 139.71012, "latitude": 35.64669, "phone": "03-3440-0808", "capacity": 32},
+            {"id": "ninsho_009", "type": "ninsho", "setup": "営利法人", "name": "ベビールーム品川", "zipcode": "140-0004", "address": "品川区南品川３－３－１０", "longitude": 139.74458, "latitude": 35.60798, "phone": "03-3474-5577", "capacity": 26},
+            {"id": "ninsho_010", "type": "ninsho", "setup": "営利法人", "name": "ちびっこランド上野", "zipcode": "110-0005", "address": "台東区上野２－１１－１６", "longitude": 139.77429, "latitude": 35.70792, "phone": "03-3832-2200", "capacity": 29}
+        ];
+        
+        // 地図の初期化
+        function initMap() {
+            map = L.map('map').setView([35.6762, 139.6503], 12);
+            
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+                maxZoom: 18
+            }).addTo(map);
+            
+            markersLayer = L.layerGroup().addTo(map);
+        }
+        
+        // 運営主体別の色分け
+        function getMarkerColor(setup) {
+            const colors = {
+                '営利法人': '#e74c3c',
+                '社福法人': '#3498db', 
+                '区市町村': '#2ecc71',
+                '他の法人': '#f39c12',
+                '公益法人': '#9b59b6',
+                'その他': '#95a5a6'
+            };
+            return colors[setup] || '#95a5a6';
+        }
+        
+        // 施設種別に基づくマーカー形状
+        function createMarker(facility) {
+            const color = getMarkerColor(facility.setup);
+            const size = facility.capacity <= 50 ? 8 : facility.capacity <= 100 ? 10 : 12;
+            
+            if (facility.type === 'ninka') {
+                // 認可保育所は円形
+                return L.circleMarker([facility.latitude, facility.longitude], {
+                    radius: size,
+                    fillColor: color,
+                    color: '#4f46e5',
+                    weight: 3,
+                    opacity: 1,
+                    fillOpacity: 0.8
+                });
+            } else {
+                // 認証保育所は四角形風
+                return L.circleMarker([facility.latitude, facility.longitude], {
+                    radius: size,
+                    fillColor: color,
+                    color: '#059669',
+                    weight: 3,
+                    opacity: 1,
+                    fillOpacity: 0.8
+                });
+            }
+        }
+        
+        // データ読み込み
+        async function loadFacilityData() {
+            try {
+                // GitHub完全版データURL
+                const dataUrl = 'https://raw.githubusercontent.com/erigithub/hoiku/main/complete_facilities.json';
+                
+                document.getElementById('stats').innerHTML = '🔄 完全版データ読み込み中...';
+                
+                let externalData = null;
+                try {
+                    const response = await fetch(dataUrl);
+                    if (response.ok) {
+                        externalData = await response.json();
+                        console.log(`✅ 完全版データ読み込み成功: ${externalData.length}施設`);
+                        
+                        // 統計情報
+                        const ninkaCount = externalData.filter(f => f.type === 'ninka').length;
+                        const ninshoCount = externalData.filter(f => f.type === 'ninsho').length;
+                        const ninshoACount = externalData.filter(f => f.type === 'ninsho' && f.subtype === 'A').length;
+                        const ninshoBCount = externalData.filter(f => f.type === 'ninsho' && f.subtype === 'B').length;
+                        
+                        console.log(`📊 認可保育所: ${ninkaCount}施設`);
+                        console.log(`📊 認証保育所A型: ${ninshoACount}施設`);
+                        console.log(`📊 認証保育所B型: ${ninshoBCount}施設`);
+                    }
+                } catch (error) {
+                    console.log('🔄 完全版データ取得中、サンプルデータで表示:', error.message);
+                }
+                
+                // 完全版データが取得できた場合はそれを使用、失敗時はサンプルデータ
+                facilityData = externalData || sampleFacilityData;
+                
+                loadStoredData();
+                setupFilters();
+                filteredData = facilityData;
+                displayMarkers();
+                updateStats();
+                updateFavoritesList();
+                
+                // 状態メッセージ更新
+                if (externalData) {
+                    const ninkaCount = externalData.filter(f => f.type === 'ninka').length;
+                    const ninshoCount = externalData.filter(f => f.type === 'ninsho').length;
+                    document.getElementById('stats').innerHTML = `🎉 完全版読み込み完了！認可:${ninkaCount}, 認証:${ninshoCount} | `;
+                } else {
+                    document.getElementById('stats').innerHTML = `⚠️ サンプルデータ表示中（完全版準備中）| `;
+                }
+                
+            } catch (error) {
+                console.error('データ読み込みエラー:', error);
+                document.getElementById('stats').innerHTML = '❌ データ読み込み失敗 | ';
+                
+                // エラー時はサンプルデータで続行
+                facilityData = sampleFacilityData;
+                loadStoredData();
+                setupFilters();
+                filteredData = facilityData;
+                displayMarkers();
+                updateStats();
+                updateFavoritesList();
+            }
+        }
+        
+        // フィルター設定
+        function setupFilters() {
+            const setupFilter = document.getElementById('setupFilter');
+            const uniqueSetups = [...new Set(facilityData.map(d => d.setup))];
+            
+            uniqueSetups.forEach(setup => {
+                if (setup && setup.trim()) {
+                    const option = document.createElement('option');
+                    option.value = setup;
+                    option.textContent = setup;
+                    setupFilter.appendChild(option);
+                }
+            });
+            
+            // イベントリスナー追加
+            document.getElementById('facilityTypeFilter').addEventListener('change', applyFilters);
+            setupFilter.addEventListener('change', applyFilters);
+            document.getElementById('capacityFilter').addEventListener('change', applyFilters);
+            document.getElementById('searchInput').addEventListener('input', applyFilters);
+        }
+        
+        // フィルター適用
+        function applyFilters() {
+            const facilityTypeFilter = document.getElementById('facilityTypeFilter').value;
+            const setupFilter = document.getElementById('setupFilter').value;
+            const capacityFilter = document.getElementById('capacityFilter').value;
+            const searchText = document.getElementById('searchInput').value.toLowerCase();
+            
+            filteredData = facilityData.filter(facility => {
+                // 施設種別フィルター
+                if (facilityTypeFilter !== 'all' && facility.type !== facilityTypeFilter) {
+                    return false;
+                }
+                
+                // 運営主体フィルター
+                if (setupFilter !== 'all' && facility.setup !== setupFilter) {
+                    return false;
+                }
+                
+                // 定員フィルター
+                const capacity = facility.capacity || 0;
+                if (capacityFilter === 'small' && (capacity < 20 || capacity > 50)) return false;
+                if (capacityFilter === 'medium' && (capacity < 51 || capacity > 100)) return false;
+                if (capacityFilter === 'large' && capacity <= 100) return false;
+                
+                // 検索フィルター
+                if (searchText && !facility.name.toLowerCase().includes(searchText)) {
+                    return false;
+                }
+                
+                return true;
+            });
+            
+            displayMarkers();
+            updateStats();
+        }
+        
+        // マーカー表示
+        function displayMarkers() {
+            markersLayer.clearLayers();
+            
+            filteredData.forEach(facility => {
+                const marker = createMarker(facility);
+                
+                const isFavorite = favorites.some(fav => fav.id === facility.id);
+                const facilityTypeLabel = facility.type === 'ninka' ? '認可保育所' : '認証保育所';
+                const facilityTypeClass = facility.type === 'ninka' ? '' : 'ninsho';
+                
+                const popupContent = `
+                    <div class="popup-content">
+                        <div class="facility-type ${facilityTypeClass}">${facilityTypeLabel}</div>
+                        <h3>${facility.name}</h3>
+                        <div class="detail"><strong>運営主体:</strong> ${facility.setup}</div>
+                        <div class="detail"><strong>所在地:</strong> ${facility.address}</div>
+                        <div class="detail"><strong>定員:</strong> ${facility.capacity}名</div>
+                        <div class="detail"><strong>電話:</strong> ${facility.phone}</div>
+                        ${facility.memo ? `<div class="detail" style="color: #059669; font-style: italic;"><strong>メモ:</strong> ${facility.memo}</div>` : ''}
+                        <div class="popup-actions">
+                            ${isFavorite ? 
+                                `<button class="btn btn-danger" onclick="removeFromFavorites('${facility.id}')">お気に入り解除</button>` :
+                                `<button class="btn btn-primary" onclick="addToFavorites('${facility.id}')">お気に入り追加</button>`
+                            }
+                            <button class="btn btn-secondary" onclick="editMemo('${facility.id}')">メモ編集</button>
+                        </div>
+                    </div>
+                `;
+                
+                marker.bindPopup(popupContent, {maxWidth: 300});
+                markersLayer.addLayer(marker);
+            });
+        }
+        
+        // お気に入り機能
+        function addToFavorites(facilityId) {
+            const facility = facilityData.find(f => f.id === facilityId);
+            if (facility && !favorites.some(fav => fav.id === facilityId)) {
+                favorites.push(facility);
+                saveFavorites();
+                updateFavoritesList();
+                displayMarkers(); // マーカーを再描画
+            }
+        }
+        
+        function removeFromFavorites(facilityId) {
+            favorites = favorites.filter(fav => fav.id !== facilityId);
+            saveFavorites();
+            updateFavoritesList();
+            displayMarkers(); // マーカーを再描画
+        }
+        
+        // メモ機能
+        function editMemo(facilityId) {
+            const facility = facilityData.find(f => f.id === facilityId);
+            if (facility) {
+                currentMemoFacility = facility;
+                document.getElementById('memoModalTitle').textContent = `${facility.name} - メモを編集`;
+                document.getElementById('memoText').value = facility.memo || '';
+                document.getElementById('memoModal').style.display = 'block';
+            }
+        }
+        
+        function closeMemoModal() {
+            document.getElementById('memoModal').style.display = 'none';
+            currentMemoFacility = null;
+        }
+        
+        function saveMemo() {
+            if (currentMemoFacility) {
+                const memoText = document.getElementById('memoText').value.trim();
+                currentMemoFacility.memo = memoText;
+                saveMemos();
+                displayMarkers(); // マーカーを再描画
+                updateFavoritesList(); // お気に入りリストを更新
+                closeMemoModal();
+            }
+        }
+        
+        // お気に入りリスト更新
+        function updateFavoritesList() {
+            const favoritesList = document.getElementById('favoritesList');
+            const favoritesCount = document.getElementById('favoritesCount');
+            
+            favoritesCount.textContent = `(${favorites.length})`;
+            
+            if (favorites.length === 0) {
+                favoritesList.innerHTML = `
+                    <p style="color: #64748b; font-size: 13px; text-align: center; padding: 20px;">
+                        お気に入りの施設がありません<br>
+                        地図上の施設をクリックして追加してください
+                    </p>
+                `;
+                return;
+            }
+            
+            favoritesList.innerHTML = favorites.map(facility => {
+                const facilityTypeLabel = facility.type === 'ninka' ? '認可' : 
+                    `認証${facility.subtype ? `(${facility.subtype})` : ''}`;
+                const additionalInfo = facility.railway && facility.station ? 
+                    ` | ${facility.railway} ${facility.station}` : '';
+                return `
+                    <div class="favorite-item" onclick="focusOnFacility('${facility.id}')">
+                        <h4>${facility.name}</h4>
+                        <div class="meta">
+                            <span>${facilityTypeLabel} | ${facility.setup}</span>
+                            <span>${facility.capacity}名</span>
+                        </div>
+                        <div style="font-size: 11px; color: #64748b; margin-top: 2px;">
+                            ${facility.address}${additionalInfo}
+                        </div>
+                        ${facility.memo ? `<div class="memo">💭 ${facility.memo}</div>` : ''}
+                    </div>
+                `;
+            }).join('');
+        }
+        
+        // 施設にフォーカス
+        function focusOnFacility(facilityId) {
+            const facility = facilityData.find(f => f.id === facilityId);
+            if (facility) {
+                map.setView([facility.latitude, facility.longitude], 16);
+                // 該当施設のポップアップを開く
+                markersLayer.eachLayer(layer => {
+                    if (layer.getLatLng().lat === facility.latitude && layer.getLatLng().lng === facility.longitude) {
+                        layer.openPopup();
+                    }
+                });
+            }
+        }
+        
+        // 統計情報更新
+        function updateStats() {
+            const total = filteredData.length;
+            const ninkaCount = filteredData.filter(f => f.type === 'ninka').length;
+            const ninshoACount = filteredData.filter(f => f.type === 'ninsho' && f.subtype === 'A').length;
+            const ninshoBCount = filteredData.filter(f => f.type === 'ninsho' && f.subtype === 'B').length;
+            const totalCapacity = filteredData.reduce((sum, facility) => sum + (facility.capacity || 0), 0);
+            const avgCapacity = total > 0 ? Math.round(totalCapacity / total) : 0;
+            
+            let statsText = `表示中: ${total.toLocaleString()}施設 `;
+            if (ninkaCount > 0 || ninshoACount > 0 || ninshoBCount > 0) {
+                statsText += `(認可:${ninkaCount}`;
+                if (ninshoACount > 0 || ninshoBCount > 0) {
+                    statsText += `, 認証A:${ninshoACount}, 認証B:${ninshoBCount}`;
+                }
+                statsText += `) `;
+            }
+            statsText += `| 総定員: ${totalCapacity.toLocaleString()}名 | 平均: ${avgCapacity}名`;
+            
+            const existingText = document.getElementById('stats').innerHTML;
+            if (existingText.includes('🎉') || existingText.includes('⚠️') || existingText.includes('❌')) {
+                // 既存の状態メッセージがある場合、それを保持して統計を追加
+                const statusPart = existingText.split('|')[0] + '| ';
+                document.getElementById('stats').innerHTML = statusPart + statsText.replace(/^[^|]*\| /, '');
+            } else {
+                document.getElementById('stats').innerHTML = statsText;
+            }
+        }
+        
+        // モーダル外クリックで閉じる
+        window.onclick = function(event) {
+            const modal = document.getElementById('memoModal');
+            if (event.target === modal) {
+                closeMemoModal();
+            }
+        }
+        
+        // 初期化
+        document.addEventListener('DOMContentLoaded', function() {
+            initMap();
+            loadFacilityData();
+        });
+    </script>
+</body>
+</html>
